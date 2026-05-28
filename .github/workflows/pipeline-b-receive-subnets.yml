@@ -1,0 +1,64 @@
+name: Pipeline B - Receive Subnets
+
+on:
+  repository_dispatch:
+    types:
+      - pipeline-a-subnets
+  workflow_dispatch:
+    inputs:
+      sourceRepo:
+        description: Source Repo
+        required: false
+        default: manual/test
+        type: string
+      sourceRunId:
+        description: Source Run ID
+        required: false
+        default: 000000
+        type: string
+      location:
+        description: Location
+        required: true
+        default: West Europe
+        type: string
+      vnetName:
+        description: VNet Name
+        required: true
+        default: vnet-dev-weu-001
+        type: string
+      subnetsJson:
+        description: Subnets JSON
+        required: true
+        default: '[{"name":"GatewaySubnet","cidr":"10.20.0.0/27","type":"gateway"},{"name":"Data","cidr":"10.20.0.32/27","type":"workload"}]'
+        type: string
+
+jobs:
+  stage_a_receive_and_print:
+    name: Pipeline B - Stage A - ReceiveAndPrint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print values received from Repo A
+        if: github.event_name == 'repository_dispatch'
+        shell: pwsh
+        run: |
+          ./scripts/Print-Received-Subnets.ps1 `
+            -SourceRepo "${{ github.event.client_payload.sourceRepo }}" `
+            -SourceRunId "${{ github.event.client_payload.sourceRunId }}" `
+            -Location "${{ github.event.client_payload.location }}" `
+            -VNetName "${{ github.event.client_payload.vnetName }}" `
+            -SubnetsJson '${{ toJson(github.event.client_payload.subnets) }}'
+
+      - name: Print values from manual test
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          ./scripts/Print-Received-Subnets.ps1 `
+            -SourceRepo "${{ inputs.sourceRepo }}" `
+            -SourceRunId "${{ inputs.sourceRunId }}" `
+            -Location "${{ inputs.location }}" `
+            -VNetName "${{ inputs.vnetName }}" `
+            -SubnetsJson '${{ inputs.subnetsJson }}'
