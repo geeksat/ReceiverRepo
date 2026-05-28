@@ -1,0 +1,44 @@
+name: Receiver - Print Subnets
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_repo:
+        description: Source repository
+        required: true
+        type: string
+      source_run_id:
+        description: Source run id
+        required: true
+        type: string
+      location:
+        description: Location
+        required: true
+        type: string
+      vnet_name:
+        description: VNet name
+        required: true
+        type: string
+      subnets_json:
+        description: Subnets JSON string
+        required: true
+        type: string
+
+jobs:
+  stage_a_receive:
+    name: Repo B - Stage A - ReceiveAndPrint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print received subnet values
+        shell: pwsh
+        run: |
+          ./scripts/Print-Received-Subnets.ps1 `
+            -SourceRepo "${{ inputs.source_repo }}" `
+            -SourceRunId "${{ inputs.source_run_id }}" `
+            -Location "${{ inputs.location }}" `
+            -VNetName "${{ inputs.vnet_name }}" `
+            -SubnetsJson '${{ inputs.subnets_json }}'
