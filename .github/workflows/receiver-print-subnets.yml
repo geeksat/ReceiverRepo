@@ -1,4 +1,5 @@
 name: Receiver - Print Subnets
+run-name: Receiver | ${{ inputs.source_repo }} | run ${{ inputs.source_run_id }}
 
 on:
   workflow_dispatch:
