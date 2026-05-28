@@ -1,35 +1,22 @@
 name: Pipeline B - Receive Subnets
 
 on:
-  repository_dispatch:
-    types:
-      - pipeline-a-subnets
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      sourceRepo:
-        description: Source Repo
+      source_repo:
         required: false
-        default: manual/test
         type: string
-      sourceRunId:
-        description: Source Run ID
+      source_run_id:
         required: false
-        default: 000000
         type: string
       location:
-        description: Location
         required: true
-        default: West Europe
         type: string
-      vnetName:
-        description: VNet Name
+      vnet_name:
         required: true
-        default: vnet-dev-weu-001
         type: string
-      subnetsJson:
-        description: Subnets JSON
+      subnet_values_json:
         required: true
-        default: '[{"name":"GatewaySubnet","cidr":"10.20.0.0/27","type":"gateway"},{"name":"Data","cidr":"10.20.0.32/27","type":"workload"}]'
         type: string
 
 jobs:
@@ -38,27 +25,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Print values received from Repo A
-        if: github.event_name == 'repository_dispatch'
         shell: pwsh
+        env:
+          SOURCE_REPO: ${{ inputs.source_repo }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          LOCATION: ${{ inputs.location }}
+          VNET_NAME: ${{ inputs.vnet_name }}
+          SUBNET_VALUES_JSON: ${{ inputs.subnet_values_json }}
         run: |
-          ./scripts/Print-Received-Subnets.ps1 `
-            -SourceRepo "${{ github.event.client_payload.sourceRepo }}" `
-            -SourceRunId "${{ github.event.client_payload.sourceRunId }}" `
-            -Location "${{ github.event.client_payload.location }}" `
-            -VNetName "${{ github.event.client_payload.vnetName }}" `
-            -SubnetsJson '${{ toJson(github.event.client_payload.subnets) }}'
+          $subnets = $env:SUBNET_VALUES_JSON | ConvertFrom-Json
 
-      - name: Print values from manual test
-        if: github.event_name == 'workflow_dispatch'
-        shell: pwsh
-        run: |
-          ./scripts/Print-Received-Subnets.ps1 `
-            -SourceRepo "${{ inputs.sourceRepo }}" `
-            -SourceRunId "${{ inputs.sourceRunId }}" `
-            -Location "${{ inputs.location }}" `
-            -VNetName "${{ inputs.vnetName }}" `
-            -SubnetsJson '${{ inputs.subnetsJson }}'
+          Write-Host "Received values in Pipeline B"
+          Write-Host "Source Repo: $env:SOURCE_REPO"
+          Write-Host "Source Run ID: $env:SOURCE_RUN_ID"
+          Write-Host "Location: $env:LOCATION"
+          Write-Host "VNet Name: $env:VNET_NAME"
+          Write-Host "Total Subnets: $($subnets.Count)"
+
+          foreach ($subnet in $subnets) {
+              Write-Host "Subnet Name: $($subnet.name)"
+              Write-Host "Subnet CIDR: $($subnet.cidr)"
+              Write-Host "Subnet Type: $($subnet.type)"
+              Write-Host "---"
+          }
