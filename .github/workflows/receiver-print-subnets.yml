@@ -1,37 +1,45 @@
-name: ZZZ Receiver Dispatch Test
-run-name: ZZZ Receiver Dispatch Test - ${{ github.run_id }}
+name: Receiver - Print Subnets
+run-name: Receiver | ${{ inputs.source_repo }} | run ${{ inputs.source_run_id }}
 
 on:
   workflow_dispatch:
     inputs:
       source_repo:
+        description: Source repository
         required: true
         type: string
       source_run_id:
+        description: Source run id
         required: true
         type: string
       location:
+        description: Location
         required: true
         type: string
       vnet_name:
+        description: VNet name
         required: true
         type: string
       subnets_json:
+        description: Subnets JSON string
         required: true
         type: string
 
 jobs:
-  receive:
-    name: ZZZ Receiver Job
+  stage_a_receive:
+    name: Repo B - Stage A - ReceiveAndPrint
     runs-on: ubuntu-latest
 
     steps:
-      - name: Print proof Repo B was independently triggered
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print received subnet values
         shell: pwsh
         run: |
-          Write-Host "REPO B GOT A REAL workflow_dispatch RUN"
-          Write-Host "Source Repo: ${{ inputs.source_repo }}"
-          Write-Host "Source Run ID: ${{ inputs.source_run_id }}"
-          Write-Host "Location: ${{ inputs.location }}"
-          Write-Host "VNet Name: ${{ inputs.vnet_name }}"
-          Write-Host "Subnets JSON: ${{ inputs.subnets_json }}"
+          ./scripts/Print-Received-Subnets.ps1 `
+            -SourceRepo "${{ inputs.source_repo }}" `
+            -SourceRunId "${{ inputs.source_run_id }}" `
+            -Location "${{ inputs.location }}" `
+            -VNetName "${{ inputs.vnet_name }}" `
+            -SubnetsJson '${{ inputs.subnets_json }}'
